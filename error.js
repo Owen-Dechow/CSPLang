@@ -2,6 +2,7 @@
 
 /** @typedef {import("./tokens").TokenTypeEnum} TokenTypeEnum */
 
+import { Expression } from "./expressionParsing.js";
 import { Token } from "./tokens.js";
 
 export class Error {
@@ -93,6 +94,15 @@ export class Error {
         const msg = `Expected expression; found token of type "${found.type}".`;
 
         return new Error(start, end, msg);
+    }
+
+    /**
+     * @param {string} msg
+     * @param {Expression} expression
+     */
+    static fromExpression(msg, expression) {
+        const loc = expression.getLocRange();
+        return new Error(loc[0], loc[1], msg);
     }
 }
 

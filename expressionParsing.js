@@ -5,10 +5,86 @@
  */
 
 import { TokenType, TokenStream, Token } from "./tokens.js";
-import { Action } from "./action.js";
 import { Error } from "./error.js";
 
-export class Expression extends Action { }
+export class Value { }
+
+export class NumberValue extends Value {
+    /**
+     * @param {number} v
+     */
+    constructor(v) {
+        super();
+        /** @type {number} */
+        this.value = v;
+    }
+}
+
+export class StringValue extends Value {
+    /**
+     * @param {string} v
+     */
+    constructor(v) {
+        super();
+        /** @type {string} */
+        this.value = v;
+    }
+}
+
+export class BooleanValue extends Value {
+    /**
+     * @param {boolean} v
+     */
+    constructor(v) {
+        super();
+        /** @type {boolean} */
+        this.value = v;
+    }
+}
+
+export class NumberList extends Value {
+    /**
+     * @param {number[]} v
+     */
+    constructor(v) {
+        super();
+        /** @type {number[]} */
+        this.value = v;
+    }
+}
+
+export class StringList extends Value {
+    /**
+     * @param {string[]} v
+     */
+    constructor(v) {
+        super();
+        /** @type {string[]} */
+        this.value = v;
+    }
+}
+
+export class BooleanList extends Value {
+    /**
+     * @param {boolean[]} v
+     */
+    constructor(v) {
+        super();
+        /** @type {boolean[]} */
+        this.value = v;
+    }
+}
+
+export class Expression {
+    /** @returns {Value} */
+    evaluate(context) {
+        throw "NOT YET IMPLIMENTED";
+    }
+
+    getLocRange() {
+        throw "NOT YET IMPLIMENTED";
+    }
+}
 
 export class BinaryExpression extends Expression {
     /**

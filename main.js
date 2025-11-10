@@ -2,10 +2,11 @@
 
 /** @typedef {import("./tokens.js").TokenTypeEnum} TokenTypeEnum */
 
-import { Expression, parseExpression } from "./expressionParsing.js";
-import { Action } from "./action.js";
+import { parseExpression } from "./expressionParsing.js";
 import { Error } from "./error.js";
 import { TokenType, TokenStream, Token, wordTokens, operatorTokens } from "./tokens.js";
+import { Assign, Conditional, ExpressionAction, For, MakeProc, RepeatN, RepeatUntil, Return } from "./action.js";
+import { execute } from "./execute.js";
 
 // @ts-ignore
 window.run = () => {
@@ -19,6 +20,7 @@ window.run = () => {
     try {
         const ast = parse(new TokenStream(tokens), true);
         console.log(ast);
+        execute(ast);
     } catch (e) {
         e.printout(text);
         console.error(e);
@@ -174,28 +176,6 @@ function lex(text) {
     return tokens;
 }
 
-class MakeProc extends Action {
-    /**
-     * @param {Token} name
-     * @param {any[]} args
-     * @param {Action[]} block
-     */
-    constructor(name, args, block) {
-        super();
-
-        /** @type {Token} */
-        this.name = name;
-
-        /** @type {Token[]} */
-        this.args = args;
-
-
-        /** @type {Action[]} */
-        this.block = block;
-    }
-}
-
-
 /**
  * @param {TokenStream} ts
  */
@@ -230,27 +210,6 @@ function parseProcedure(ts) {
     return new MakeProc(name, args, block);
 }
 
-class Conditional extends Action {
-    /**
-     * @param {Expression} conditional
-     * @param {Token[]} block
-     * @param {Token[]} elseBlock
-     */
-    constructor(conditional, block, elseBlock) {
-        super();
-
-        /** @type {Expression} */
-        this.conditional = conditional;
-
-        /** @type {Token[]} */
-        this.block = block;
-
-        /** @type {Token[]} */
-        this.elseBlock = elseBlock;
-    }
-}
-
-
 /**
  * @param {TokenStream} ts
  */
@@ -275,20 +234,6 @@ function parseConditional(ts) {
     return new Conditional(conditional, block, elseBlock);
 }
 
-class RepeatN extends Action {
-    /**
-     * @param {Expression} n
-     * @param {Token[]} block
-     */
-    constructor(n, block) {
-        super();
-        this.n = n;
-        this.block = block;
-    }
-
-
-}
-
 /**
  * @param {TokenStream} ts
  */
@@ -299,24 +244,6 @@ function parseRepeatN(ts) {
     const block = parse(ts, false);
 
     return new RepeatN(n, block);
-}
-
-class RepeatUntil extends Action {
-    /**
-     * @param {Expression} conditional
-     * @param {Token[]} block
-     */
-    constructor(conditional, block) {
-        super();
-
-        /** @type {Expression} */
-        this.conditional = conditional;
-
-        /** @type {Token[]} */
-        this.block = block;
-    }
-
-
 }
 
 /**
@@ -344,28 +271,6 @@ function parseRepeat(ts) {
 
 }
 
-class For extends Action {
-    /**
-     * @param {Token} item
-     * @param {Expression} list
-     * @param {Token[]} block
-     */
-    constructor(item, list, block) {
-        super();
-
-        /** @type {Token} */
-        this.item = item;
-
-        /** @type {Expression} */
-        this.list = list;
-
-        /** @type {Token[]} */
-        this.block = block;
-    }
-
-
-}
-
 /**
  * @param {TokenStream} ts
  */
@@ -382,20 +287,6 @@ function parseFor(ts) {
     return new For(item, list, block);
 }
 
-class Return extends Action {
-    /**
-     * @param {Expression} value
-     */
-    constructor(value) {
-        super();
-
-        /** @type {Expression} */
-        this.value = value;
-    }
-
-
-}
-
 /**
  * @param {TokenStream} ts
  */
@@ -403,23 +294,6 @@ function parseReturn(ts) {
     return new Return(parseExpression(ts));
 }
 
-class Assign extends Action {
-    /**
-     * @param {Token} variable
-     * @param {Expression} expression
-     */
-    constructor(variable, expression) {
-        super();
-
-        /** @type {Token} */
-        this.variable = variable;
-
-        /** @type {Expression} */
-        this.expression = expression;
-    }
-
-
-}
 
 /**
  * @param {TokenStream} ts
@@ -443,7 +317,7 @@ function parseIdLeadLine(ts) {
     if (t.type == TokenType.ASSIGN) {
         return parseAssign(ts);
     } else {
-        return parseExpression(ts);
+        return new ExpressionAction(parseExpression(ts));
     }
 }
 
@@ -485,4 +359,3 @@ function parse(ts, rootBlock) {
 
     return steps;
 }
-
