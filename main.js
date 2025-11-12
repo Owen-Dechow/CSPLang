@@ -2,8 +2,8 @@
 
 /** @typedef {import("./tokens.js").TokenTypeEnum} TokenTypeEnum */
 
-import { parseExpression } from "./expressionParsing.js";
-import { Error } from "./error.js";
+import { parseExpression } from "./expressions.js";
+import { CSPError } from "./error.js";
 import { TokenType, TokenStream, Token, wordTokens, operatorTokens } from "./tokens.js";
 import { Assign, Conditional, ExpressionAction, For, MakeProc, RepeatN, RepeatUntil, Return } from "./action.js";
 import { execute } from "./execute.js";
@@ -22,8 +22,8 @@ window.run = () => {
         console.log(ast);
         execute(ast);
     } catch (e) {
-        e.printout(text);
         console.error(e);
+        e.printout(text);
     }
 };
 
@@ -163,7 +163,7 @@ function lex(text) {
                 }
                 else if (value.length == 0) {
                     value += c;
-                    throw "E"; // TODO
+                    throw new Error("E"); // TODO
                 }
                 else {
                     sendToken(op, true);
@@ -192,14 +192,14 @@ function parseProcedure(ts) {
         } else if (t.type == TokenType.ID) {
             args.push(t);
         } else {
-            throw Error.invalidToken(TokenType.ID, t);
+            throw CSPError.invalidToken(TokenType.ID, t);
         }
 
         const following = ts.nextSig();
         if (following.type == TokenType.CLOSE_PAREN) {
             break;
         } else if (following.type != TokenType.COMMA) {
-            throw Error.invalidToken(TokenType.CLOSE_PAREN, following);
+            throw CSPError.invalidToken(TokenType.CLOSE_PAREN, following);
         }
     }
 
@@ -346,7 +346,7 @@ function parse(ts, rootBlock) {
         } else if (t.type == TokenType.ID) {
             steps.push(parseIdLeadLine(ts));
         } else {
-            throw Error.invalidLine(t);
+            throw CSPError.invalidLine(t);
         }
 
     }
@@ -354,7 +354,7 @@ function parse(ts, rootBlock) {
     ts.back();
     if (ts.next().type == TokenType.EOF && !rootBlock) {
         ts.back();
-        throw Error.invalidToken(TokenType.CLOSE_BLOCK, ts.next());
+        throw CSPError.invalidToken(TokenType.CLOSE_BLOCK, ts.next());
     }
 
     return steps;

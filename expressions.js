@@ -1,20 +1,31 @@
 // @ts-check
 
 /**
- * @typedef {import("./tokens.js").TokenTypeEnum} TokenTypeEnum
+ * @import {TokenTypeEnum} from "./tokens.js"
+ * @import {Context} from "./execute.js" 
  */
 
 import { TokenType, TokenStream, Token } from "./tokens.js";
-import { Error } from "./error.js";
+import { CSPError } from "./error.js";
 
-export class Value { }
+export class Value {
+    /**
+     * @param {string | number | boolean | any} v
+     */
+    constructor(v) {
+        /**
+         * @type {string | number | boolean | any[]}
+         */
+        this.value = v;
+    }
+}
 
 export class NumberValue extends Value {
     /**
      * @param {number} v
      */
     constructor(v) {
-        super();
+        super(v);
         /** @type {number} */
         this.value = v;
     }
@@ -25,7 +36,7 @@ export class StringValue extends Value {
      * @param {string} v
      */
     constructor(v) {
-        super();
+        super(v);
         /** @type {string} */
         this.value = v;
     }
@@ -36,53 +47,36 @@ export class BooleanValue extends Value {
      * @param {boolean} v
      */
     constructor(v) {
-        super();
+        super(v);
         /** @type {boolean} */
         this.value = v;
     }
 }
 
-export class NumberList extends Value {
+export class ListValue extends Value {
     /**
-     * @param {number[]} v
+     * @param {Value[]} v
      */
     constructor(v) {
-        super();
-        /** @type {number[]} */
+        super(v);
+        /** @type {Value[]} */
         this.value = v;
     }
 }
 
-export class StringList extends Value {
-    /**
-     * @param {string[]} v
-     */
-    constructor(v) {
-        super();
-        /** @type {string[]} */
-        this.value = v;
-    }
-}
-
-export class BooleanList extends Value {
-    /**
-     * @param {boolean[]} v
-     */
-    constructor(v) {
-        super();
-        /** @type {boolean[]} */
-        this.value = v;
-    }
-}
+export class NullValue extends Value { }
 
 export class Expression {
-    /** @returns {Value} */
-    evaluate(context) {
-        throw "NOT YET IMPLIMENTED";
+    /**
+     * @param {Context} _context
+     * @returns {Value}
+     */
+    evaluate(_context) {
+        throw new Error("NOT YET IMPLIMENTED");
     }
 
     getLocRange() {
-        throw "NOT YET IMPLIMENTED";
+        throw new Error("NOT YET IMPLIMENTED");
     }
 }
 
@@ -104,6 +98,64 @@ export class BinaryExpression extends Expression {
         /** @type {Token}  */
         this.token = token;
     }
+
+    /**
+     * @param {Context} context
+     * @returns {Value}
+     */
+    evaluate(context) {
+        const left = this.left.evaluate(context);
+        const right = this.right.evaluate(context);
+
+        let type = this.token.type;
+
+        // NullValue, NumberValue, StringValue, BooleanValue, ListValue  
+
+        if (left.constructor != right.constructor) {
+            let errorRange = [0, 100];//this.getLocRange(); // TODO
+            throw new CSPError(
+                errorRange[0],
+                errorRange[1],
+                `Left and right hand sides of "${this.token.type}" are of different types; left is of type ${left.constructor.name}, and right is of type ${right.constructor.name}.`
+            );
+        }
+
+        let binOps = {};
+
+        if (left instanceof NumberValue) {
+            binOps[TokenType.ADD] = (a, b) => new NumberValue(a + b);
+            binOps[TokenType.SUBTRACT] = (a, b) => new NumberValue(a - b);
+            binOps[TokenType.DIVIDE] = (a, b) => new NumberValue(a / b);
+            binOps[TokenType.MULTIPLY] = (a, b) => new NumberValue(a * b);
+            binOps[TokenType.GREATER_THAN] = (a, b) => new BooleanValue(a > b);
+            binOps[TokenType.LESS_THAN] = (a, b) => new BooleanValue(a < b);
+            binOps[TokenType.EQUAL] = (a, b) => new BooleanValue(a === b);
+            binOps[TokenType.NOT_EQUAL] = (a, b) => new BooleanValue(a !== b);
+            binOps[TokenType.LESS_THAN_OR_EQUAL] = (a, b) => new BooleanValue(a <= b);
+            binOps[TokenType.GREATER_THAN_OR_EQUAL] = (a, b) => new BooleanValue(a >= b);
+            binOps[TokenType.MOD] = (a, b) => new NumberValue(a % b);
+        } else if (left instanceof StringValue) {
+            binOps[TokenType.ADD] = (a, b) => new StringValue(a + b);
+            binOps[TokenType.EQUAL] = (a, b) => new BooleanValue(a === b);
+            binOps[TokenType.NOT_EQUAL] = (a, b) => new BooleanValue(a !== b);
+        } else if (left instanceof BooleanValue) {
+            binOps[TokenType.AND] = (a, b) => new BooleanValue(a && b);
+            binOps[TokenType.OR] = (a, b) => new BooleanValue(a || b);
+            binOps[TokenType.EQUAL] = (a, b) => new BooleanValue(a === b);
+            binOps[TokenType.NOT_EQUAL] = (a, b) => new BooleanValue(a !== b);
+        } else if (left instanceof NullValue) {
+            throw new Error("NOT YET IMPLIMENTED");
+        } else {
+            throw new Error("SHOULD NEVER GET TO THIS POINT");
+        }
+
+        const op = binOps[type];
+
+        if (op != undefined)
+            return op(left.value, right.value);
+
+        throw new Error("NOT YET IMPLIMENTED");
+    }
 }
 
 export class LiteralExpression extends Expression {
@@ -116,6 +168,22 @@ export class LiteralExpression extends Expression {
         /** @type {Token}  */
         this.token = token;
     }
+
+    /**
+     * @param {Context} _context
+     */
+    evaluate(_context) {
+        let type = this.token.type;
+
+        if (type == TokenType.NUMBER) {
+            return new NumberValue(parseFloat(this.token.value));
+        } else if (type == TokenType.BOOL) {
+            return new BooleanValue(this.token.value == "true");
+        } else {
+            const string = this.token.value.slice(1, this.token.value.length - 1);
+            return new StringValue(string);
+        }
+    }
 }
 
 export class IdentityExpression extends Expression {
@@ -125,6 +193,19 @@ export class IdentityExpression extends Expression {
     constructor(token) {
         super();
         this.token = token;
+    }
+
+    /**
+     * @param {Context} context
+     */
+    evaluate(context) {
+        let object = context.getValue(this.token);
+        if (object instanceof Value)
+            return object;
+
+        let end = this.token.loc;
+        let start = this.token.loc - this.token.value.length;
+        throw new CSPError(start, end, `"${this.token.value}" is a procedure; you may not reference it outside of a call.`);
     }
 }
 
@@ -138,6 +219,13 @@ export class ContainerExpression extends Expression {
         /** @type {Expression}  */
         this.innerExpression = innerExpression;
     }
+
+    /**
+     * @param {Context} context
+     */
+    evaluate(context) {
+        return this.innerExpression.evaluate(context);
+    }
 }
 
 export class ListExpression extends Expression {
@@ -150,21 +238,45 @@ export class ListExpression extends Expression {
         /** @type {Expression[]}  */
         this.items = items;
     }
+
+    /**
+     * @param {Context} context
+     */
+    evaluate(context) {
+        let list = [];
+        this.items.forEach(e => { list.push(e.evaluate(context)); });
+        return new ListValue(list);
+    }
 }
 
 export class FunctionCall extends Expression {
     /**
-     * @param {Expression} func 
+     * @param {Token} func 
      * @param {Expression[]} args 
      */
     constructor(func, args) {
         super();
 
-        /** @type {Expression}  */
+        /** @type {Token}  */
         this.func = func;
 
         /** @type {Expression[]}  */
         this.args = args;
+    }
+
+    /**
+     * @param {Context} context
+     */
+    evaluate(context) {
+        let func = context.getValue(this.func);
+
+        if (func instanceof Value)
+            throw new Error("NOT YET IMPLIMENTED");
+
+        const start = this.func.loc;
+        const end = this.func.loc - this.func.value.length;
+        let returnVal = func(this.args, [start, end], context);
+        return returnVal == null ? new NullValue() : returnVal;
     }
 }
 
@@ -212,7 +324,7 @@ function parseExpressionList(ts, argList) {
         if (commaOrClose.type == closer)
             break;
 
-        throw Error.invalidToken(closer, commaOrClose);
+        throw CSPError.invalidToken(closer, commaOrClose);
     }
 
     return items;
@@ -266,7 +378,7 @@ export function parseExpression(ts) {
                 exp = new BinaryExpression(exp, t, parseExpression(ts));
             } else if (t.type == TokenType.OPEN_PAREN && exp instanceof IdentityExpression) {
                 const args = parseExpressionList(ts, true);
-                exp = new FunctionCall(exp, args);
+                exp = new FunctionCall(exp.token, args);
             } else {
                 ts.back();
                 break;
@@ -276,7 +388,7 @@ export function parseExpression(ts) {
 
     if (exp == null) {
         ts.back();
-        throw Error.expectedExpression(ts.next());
+        throw CSPError.expectedExpression(ts.next());
     }
 
     return exp;

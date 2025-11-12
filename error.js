@@ -2,10 +2,10 @@
 
 /** @typedef {import("./tokens").TokenTypeEnum} TokenTypeEnum */
 
-import { Expression } from "./expressionParsing.js";
+import { Expression } from "./expressions.js";
 import { Token } from "./tokens.js";
 
-export class Error {
+export class CSPError {
     /**
      * @param {number} start 
      * @param {number} end 
@@ -72,7 +72,7 @@ export class Error {
         const end = found.loc;
         const msg = `Expected token of type "${expected}" found "${found.type}".`;
 
-        return new Error(start, end, msg);
+        return new CSPError(start, end, msg);
     }
 
     /** @param {Token} found */
@@ -81,7 +81,7 @@ export class Error {
         const end = found.loc;
         const msg = `Lines may not begin with token of type "${found.type}".`;
 
-        return new Error(start, end, msg);
+        return new CSPError(start, end, msg);
     }
 
 
@@ -93,7 +93,7 @@ export class Error {
         const end = found.loc;
         const msg = `Expected expression; found token of type "${found.type}".`;
 
-        return new Error(start, end, msg);
+        return new CSPError(start, end, msg);
     }
 
     /**
@@ -101,8 +101,8 @@ export class Error {
      * @param {Expression} expression
      */
     static fromExpression(msg, expression) {
-        const loc = expression.getLocRange();
-        return new Error(loc[0], loc[1], msg);
+        const loc = [0, 1]; // TODO expression.getLocRange();
+        return new CSPError(loc[0], loc[1], msg);
     }
 }
 

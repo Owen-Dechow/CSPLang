@@ -1,6 +1,6 @@
 // @ts-check
 
-import { Expression } from "./expressionParsing.js";
+import { Expression } from "./expressions.js";
 import { Token } from "./tokens.js";
 
 export class Action { }

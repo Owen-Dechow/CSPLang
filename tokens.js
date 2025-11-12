@@ -1,6 +1,6 @@
 // @ts-check
 
-import { Error } from "./error.js";
+import { CSPError } from "./error.js";
 
 /** @enum {string} */
 export const TokenType = Object.freeze({
@@ -160,7 +160,7 @@ export class TokenStream {
         const t = this.nextSig();
 
         if (t.type != type)
-            throw Error.invalidToken(type, t);
+            throw CSPError.invalidToken(type, t);
 
         return t;
     }
