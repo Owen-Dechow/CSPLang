@@ -15,9 +15,9 @@ window.run = () => {
 
     // @ts-ignore
     const text = document.querySelector("#code").value;
-    const tokens = lex(text + "\n");
 
     try {
+        const tokens = lex(text + "\n");
         const ast = parse(new TokenStream(tokens), true);
         console.log(ast);
         execute(ast);
@@ -163,7 +163,7 @@ function lex(text) {
                 }
                 else if (value.length == 0) {
                     value += c;
-                    throw new Error("E"); // TODO
+                    throw new CSPError(loc, loc + 1, `Unknown token "${value}".`);
                 }
                 else {
                     sendToken(op, true);

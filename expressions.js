@@ -8,24 +8,14 @@
 import { TokenType, TokenStream, Token } from "./tokens.js";
 import { CSPError } from "./error.js";
 
-export class Value {
-    /**
-     * @param {string | number | boolean | any} v
-     */
-    constructor(v) {
-        /**
-         * @type {string | number | boolean | any[]}
-         */
-        this.value = v;
-    }
-}
+export class Value { }
 
 export class NumberValue extends Value {
     /**
      * @param {number} v
      */
     constructor(v) {
-        super(v);
+        super();
         /** @type {number} */
         this.value = v;
     }
@@ -36,7 +26,7 @@ export class StringValue extends Value {
      * @param {string} v
      */
     constructor(v) {
-        super(v);
+        super();
         /** @type {string} */
         this.value = v;
     }
@@ -47,7 +37,7 @@ export class BooleanValue extends Value {
      * @param {boolean} v
      */
     constructor(v) {
-        super(v);
+        super();
         /** @type {boolean} */
         this.value = v;
     }
@@ -58,7 +48,7 @@ export class ListValue extends Value {
      * @param {Value[]} v
      */
     constructor(v) {
-        super(v);
+        super();
         /** @type {Value[]} */
         this.value = v;
     }
@@ -72,12 +62,24 @@ export class Expression {
      * @returns {Value}
      */
     evaluate(_context) {
-        throw new Error("NOT YET IMPLIMENTED");
+        throw new Error("SHOULD NEVER HIT THIS POINT");
     }
 
+    /**
+     * @returns {[number, number]}
+     */
     getLocRange() {
-        throw new Error("NOT YET IMPLIMENTED");
+        throw new Error("SHOULD NEVER HIT THIS POINT");
     }
+}
+
+/**
+ * @param {[number, number]} a
+ * @param {[number, number]} b
+ * @returns {[number, number]}
+ */
+function combineRange(a, b) {
+    return [Math.min(a[0], a[1], b[0], b[1]), Math.max(a[0], a[1], b[0], b[1])];
 }
 
 export class BinaryExpression extends Expression {
@@ -110,51 +112,61 @@ export class BinaryExpression extends Expression {
         let type = this.token.type;
 
         // NullValue, NumberValue, StringValue, BooleanValue, ListValue  
-
         if (left.constructor != right.constructor) {
-            let errorRange = [0, 100];//this.getLocRange(); // TODO
-            throw new CSPError(
-                errorRange[0],
-                errorRange[1],
-                `Left and right hand sides of "${this.token.type}" are of different types; left is of type ${left.constructor.name}, and right is of type ${right.constructor.name}.`
+            throw CSPError.fromExpression(
+                `Left and right hand sides of "${this.token.type}" are of different types; left is of type ${left.constructor.name}, and right is of type ${right.constructor.name}.`, this
             );
         }
 
         let binOps = {};
 
         if (left instanceof NumberValue) {
-            binOps[TokenType.ADD] = (a, b) => new NumberValue(a + b);
-            binOps[TokenType.SUBTRACT] = (a, b) => new NumberValue(a - b);
-            binOps[TokenType.DIVIDE] = (a, b) => new NumberValue(a / b);
-            binOps[TokenType.MULTIPLY] = (a, b) => new NumberValue(a * b);
-            binOps[TokenType.GREATER_THAN] = (a, b) => new BooleanValue(a > b);
-            binOps[TokenType.LESS_THAN] = (a, b) => new BooleanValue(a < b);
-            binOps[TokenType.EQUAL] = (a, b) => new BooleanValue(a === b);
-            binOps[TokenType.NOT_EQUAL] = (a, b) => new BooleanValue(a !== b);
-            binOps[TokenType.LESS_THAN_OR_EQUAL] = (a, b) => new BooleanValue(a <= b);
-            binOps[TokenType.GREATER_THAN_OR_EQUAL] = (a, b) => new BooleanValue(a >= b);
-            binOps[TokenType.MOD] = (a, b) => new NumberValue(a % b);
+            binOps[TokenType.ADD] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a + b);
+            binOps[TokenType.SUBTRACT] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a - b);
+            binOps[TokenType.DIVIDE] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a / b);
+            binOps[TokenType.MULTIPLY] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a * b);
+            binOps[TokenType.GREATER_THAN] = (/** @type {number} */ a, /** @type {number} */ b) => new BooleanValue(a > b);
+            binOps[TokenType.LESS_THAN] = (/** @type {number} */ a, /** @type {number} */ b) => new BooleanValue(a < b);
+            binOps[TokenType.EQUAL] = (/** @type {any} */ a, /** @type {any} */ b) => new BooleanValue(a === b);
+            binOps[TokenType.NOT_EQUAL] = (/** @type {any} */ a, /** @type {any} */ b) => new BooleanValue(a !== b);
+            binOps[TokenType.LESS_THAN_OR_EQUAL] = (/** @type {number} */ a, /** @type {number} */ b) => new BooleanValue(a <= b);
+            binOps[TokenType.GREATER_THAN_OR_EQUAL] = (/** @type {number} */ a, /** @type {number} */ b) => new BooleanValue(a >= b);
+            binOps[TokenType.MOD] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a % b);
         } else if (left instanceof StringValue) {
-            binOps[TokenType.ADD] = (a, b) => new StringValue(a + b);
-            binOps[TokenType.EQUAL] = (a, b) => new BooleanValue(a === b);
-            binOps[TokenType.NOT_EQUAL] = (a, b) => new BooleanValue(a !== b);
+            binOps[TokenType.ADD] = (/** @type {string} */ a, /** @type {string} */ b) => new StringValue(a + b);
+            binOps[TokenType.EQUAL] = (/** @type {string} */ a, /** @type {string} */ b) => new BooleanValue(a === b);
+            binOps[TokenType.NOT_EQUAL] = (/** @type {string} */ a, /** @type {string} */ b) => new BooleanValue(a !== b);
         } else if (left instanceof BooleanValue) {
-            binOps[TokenType.AND] = (a, b) => new BooleanValue(a && b);
-            binOps[TokenType.OR] = (a, b) => new BooleanValue(a || b);
-            binOps[TokenType.EQUAL] = (a, b) => new BooleanValue(a === b);
-            binOps[TokenType.NOT_EQUAL] = (a, b) => new BooleanValue(a !== b);
+            binOps[TokenType.AND] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a && b);
+            binOps[TokenType.OR] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a || b);
+            binOps[TokenType.EQUAL] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a === b);
+            binOps[TokenType.NOT_EQUAL] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a !== b);
         } else if (left instanceof NullValue) {
-            throw new Error("NOT YET IMPLIMENTED");
-        } else {
-            throw new Error("SHOULD NEVER GET TO THIS POINT");
+            throw CSPError.nullValueError(this.getLocRange());
+        }
+        else if (left instanceof ListValue) { } else {
+            throw new Error("SHOULD NEVER HIT THIS POINT");
         }
 
         const op = binOps[type];
 
-        if (op != undefined)
-            return op(left.value, right.value);
+        if (op != undefined) {
+            // @ts-ignore
+            const rightVal = right.value;
 
-        throw new Error("NOT YET IMPLIMENTED");
+            return op(left.value, rightVal);
+        }
+
+        throw CSPError.fromExpression(`${type} is not a valid operator for ${left.constructor.name}.`, this);
+    }
+
+    /**
+     * @returns {[number, number]}
+     */
+    getLocRange() {
+        const lr = this.left.getLocRange();
+        const rr = this.right.getLocRange();
+        return combineRange(lr, rr);
     }
 }
 
@@ -184,6 +196,13 @@ export class LiteralExpression extends Expression {
             return new StringValue(string);
         }
     }
+
+    /**
+     * @returns {[number, number]}
+     */
+    getLocRange() {
+        return [this.token.loc - this.token.value.length, this.token.loc];
+    }
 }
 
 export class IdentityExpression extends Expression {
@@ -207,6 +226,13 @@ export class IdentityExpression extends Expression {
         let start = this.token.loc - this.token.value.length;
         throw new CSPError(start, end, `"${this.token.value}" is a procedure; you may not reference it outside of a call.`);
     }
+
+    /**
+     * @returns {[number, number]}
+     */
+    getLocRange() {
+        return [this.token.loc - this.token.value.length, this.token.loc];
+    }
 }
 
 export class ContainerExpression extends Expression {
@@ -226,17 +252,32 @@ export class ContainerExpression extends Expression {
     evaluate(context) {
         return this.innerExpression.evaluate(context);
     }
+
+    /**
+     * @returns {[number, number]}
+     */
+    getLocRange() {
+        return this.innerExpression.getLocRange();
+    }
 }
 
 export class ListExpression extends Expression {
     /**
-     * @param {Expression[]} items 
+     * @param {Expression[]} items
+     * @param {Token} open
+     * @param {Token} close
      */
-    constructor(items) {
+    constructor(items, open, close) {
         super();
 
         /** @type {Expression[]}  */
         this.items = items;
+
+        /** @type {Token}  */
+        this.open = open;
+
+        /** @type {Token}  */
+        this.close = close;
     }
 
     /**
@@ -247,14 +288,22 @@ export class ListExpression extends Expression {
         this.items.forEach(e => { list.push(e.evaluate(context)); });
         return new ListValue(list);
     }
+
+    /**
+     * @returns {[number, number]}
+     */
+    getLocRange() {
+       return [this.open.loc - this.open.value.length, this.close.loc]
+    }
 }
 
 export class FunctionCall extends Expression {
     /**
-     * @param {Token} func 
-     * @param {Expression[]} args 
+     * @param {Token} func
+     * @param {Expression[]} args
+     * @param {Token} close
      */
-    constructor(func, args) {
+    constructor(func, args, close) {
         super();
 
         /** @type {Token}  */
@@ -262,6 +311,9 @@ export class FunctionCall extends Expression {
 
         /** @type {Expression[]}  */
         this.args = args;
+
+        /** @type {Token}  */
+        this.close = close;
     }
 
     /**
@@ -270,13 +322,21 @@ export class FunctionCall extends Expression {
     evaluate(context) {
         let func = context.getValue(this.func);
 
-        if (func instanceof Value)
-            throw new Error("NOT YET IMPLIMENTED");
+        if (func instanceof Value) {
+            throw CSPError.fromExpression(`Expected ${this.func.value} to be a procedure; found ${func.constructor.name}.`, this);
+        }
 
         const start = this.func.loc;
         const end = this.func.loc - this.func.value.length;
         let returnVal = func(this.args, [start, end], context);
         return returnVal == null ? new NullValue() : returnVal;
+    }
+
+    /**
+     * @returns {[number, number]}
+     */
+    getLocRange() {
+        return [this.func.loc - this.func.value.length, this.close.loc];
     }
 }
 
@@ -294,12 +354,45 @@ export class UnaryExpression extends Expression {
         /** @type {Token} */
         this.token = token;
     }
+
+    /**
+     * @param {Context} context
+     */
+    evaluate(context) {
+        const right = this.innerExpression.evaluate(context);
+
+        let type = this.token.type;
+
+        let unaryOps = {};
+
+        if (right instanceof NumberValue) {
+            unaryOps[TokenType.SUBTRACT] = (/** @type {number} */ a) => new NumberValue(-a);
+        } else if (right instanceof BooleanValue) {
+            unaryOps[TokenType.NOT] = (/** @type {boolean} */ a) => new BooleanValue(!a);
+        } else if (right instanceof NullValue) {
+            throw CSPError.nullValueError(this.getLocRange());
+        } else if (right instanceof StringValue || right instanceof ListValue) { } else {
+            throw Error("SHOULD NEVER HIT THIS POINT");
+        }
+
+        const op = unaryOps[type];
+
+        if (op != undefined) {
+            return op(right.value);
+        }
+
+        throw CSPError.fromExpression(`${type} is not a valid operator for ${right.constructor.name}.`, this);
+    }
+
+    getLocRange() {
+        return combineRange([this.token.loc, this.token.loc], this.innerExpression.getLocRange());
+    }
 }
 
 /**
  * @param {TokenStream} ts
  * @param {boolean} argList
- * @returns {Expression[]}
+ * @returns {[Expression[], Token]}
  */
 function parseExpressionList(ts, argList) {
     const closer = argList ? TokenType.CLOSE_PAREN : TokenType.CLOSE_BRACKET;
@@ -327,7 +420,8 @@ function parseExpressionList(ts, argList) {
         throw CSPError.invalidToken(closer, commaOrClose);
     }
 
-    return items;
+    ts.back();
+    return [items, ts.next()];
 }
 
 /** 
@@ -354,7 +448,8 @@ export function parseExpression(ts) {
                 exp = new ContainerExpression(innerExp);
                 ts.takeSigOfType(TokenType.CLOSE_PAREN);
             } else if (t.type == TokenType.OPEN_BRACKET) {
-                exp = new ListExpression(parseExpressionList(ts, false));
+                const lst = parseExpressionList(ts, false);
+                exp = new ListExpression(lst[0], t, lst[1]);
             } else if (t.type == TokenType.SUBTRACT) {
                 const innerExp = parseExpression(ts);
                 return new UnaryExpression(t, innerExp);
@@ -378,7 +473,7 @@ export function parseExpression(ts) {
                 exp = new BinaryExpression(exp, t, parseExpression(ts));
             } else if (t.type == TokenType.OPEN_PAREN && exp instanceof IdentityExpression) {
                 const args = parseExpressionList(ts, true);
-                exp = new FunctionCall(exp.token, args);
+                exp = new FunctionCall(exp.token, args[0], args[1]);
             } else {
                 ts.back();
                 break;

@@ -20,15 +20,18 @@ body {
 .output {
     border: 1px solid;
     padding: 5px;
+    overflow: auto;
+    max-width: 100%;
+    white-space: pre-wrap;
 
     .err {
         color: yellow;
-        background-color: #ffff0020;
+        background-color: #ffff0010;
 
         .err {
             color: red;
             font-weight: bold;
-            background-color: #ff000020;
+            background-color: #ff000010;
         }
     }
 }

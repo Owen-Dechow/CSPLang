@@ -1,9 +1,33 @@
 // @ts-check
 
-import { BooleanValue, Expression, ListValue, NullValue, NumberValue, Value } from "./expressions.js";
+import { BooleanValue, Expression, ListValue, NullValue, NumberValue, StringValue, Value } from "./expressions.js";
 import { Action, Assign, Conditional, ExpressionAction, For, MakeProc, Return } from "./action.js";
 import { CSPError } from "./error.js";
 import { Token } from "./tokens.js";
+
+/**
+ * @param {number} nArgs
+ * @param {string} name
+ * @param {function(Value[], [number, number]): Value} callback
+ */
+function makeBuiltinFunction(nArgs, name, callback) {
+    return (/** @type {Expression[]} */ args, /** @type {[number, number]} */ call_range, /** @type {Context} */ ctx) => {
+        if (nArgs != args.length) {
+            throw new CSPError(
+                call_range[0],
+                call_range[1],
+                `Incorrect number of arguments passed to function "${name}"; expected ${nArgs} found ${args.length}.`
+            );
+        }
+
+        let vArgs = [];
+        for (let i = 0; i < args.length; i++) {
+            vArgs.push(args[i].evaluate(ctx));
+        }
+
+        return callback(vArgs, call_range);
+    };
+}
 
 /**
  * @param {Action[]} ast
@@ -11,8 +35,32 @@ import { Token } from "./tokens.js";
 export function execute(ast) {
     const gc = new Context();
     gc.context = {
-        "DISPLAY": (/** @type {Expression[]} */ x, cr, /** @type {Context} */ ctx) => { console.log(x[0].evaluate(ctx)); return new NullValue(null); },
-        "LENGTH": (/** @type {Expression[]} */ x, cr, /** @type {Context} */ ctx) => { let a = x[0].evaluate(ctx); return new NumberValue(a.value.length); }
+        "LENGTH": makeBuiltinFunction(1, "LENGTH", (args, call_range) => {
+            let lst = args[0];
+
+            if (lst instanceof ListValue)
+                return new NumberValue(lst.value.length);
+            else if (lst instanceof StringValue)
+                return new NumberValue(lst.value.length);
+
+            throw new CSPError(call_range[0], call_range[1], `The function "LENGTH" expected ${ListValue.name} or ${StringValue.name}; found ${lst.constructor.name}.`);
+        }),
+        "DISPLAY": makeBuiltinFunction(1, "DISPLAY", (args, call_range) => {
+            let arg = args[0];
+
+            if (arg instanceof StringValue || arg instanceof NumberValue || arg instanceof BooleanValue) {
+                // @ts-ignore
+                document.querySelector("#output").textContent += " " + arg.value;
+
+                return new NullValue();
+            } else if (arg instanceof ListValue) {
+                throw new CSPError(call_range[0], call_range[1], `The function "DISPLAY" can not directly take a list.`);
+            } else if (arg instanceof NullValue) {
+                throw CSPError.nullValueError(call_range);
+            }
+
+            throw new Error("SHOULD NEVER HIT THIS POINT");
+        })
     };
 
     const result = executeBlock(ast, gc, gc);
@@ -49,7 +97,7 @@ export class Context {
             parent = parent.parentContext;
 
             if (parent) {
-                if (parent.context[key]) {
+                if (parent.context[key] && parent.parentContext) {
                     parent.context[key] = val;
                 }
             }
@@ -96,7 +144,7 @@ function executeBlock(block, context, gc) {
                     throw new CSPError(
                         call_range[0],
                         call_range[1],
-                        `Invalid number of arguments passed to function "${e.name.value}"; expected ${e.args.length} found ${args.length}.`
+                        `Incorrect number of arguments passed to function "${e.name.value}"; expected ${e.args.length} found ${args.length}.`
                     );
                 }
 

@@ -70,7 +70,7 @@ export class CSPError {
     static invalidToken(expected, found) {
         const start = found.loc - found.value.length;
         const end = found.loc;
-        const msg = `Expected token of type "${expected}" found "${found.type}".`;
+        const msg = `Expected token of type "${expected}"; found "${found.type}".`;
 
         return new CSPError(start, end, msg);
     }
@@ -101,8 +101,15 @@ export class CSPError {
      * @param {Expression} expression
      */
     static fromExpression(msg, expression) {
-        const loc = [0, 1]; // TODO expression.getLocRange();
+        const loc = expression.getLocRange();
         return new CSPError(loc[0], loc[1], msg);
+    }
+
+    /**
+     * @param {[number, number]} range
+     */
+    static nullValueError(range) {
+        return new CSPError(range[0], range[1], "Null value error.");
     }
 }
 
