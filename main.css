@@ -87,11 +87,12 @@ body {
     display: flex;
     flex-direction: column;
 
-    &.flip {
-        flex-direction: column-reverse;
-    }
-
     div {
+        &.complete-target{
+            background-color: white;
+            color: black;
+        }
+
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 5px;

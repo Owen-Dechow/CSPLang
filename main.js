@@ -7,7 +7,7 @@ import { CSPError } from "./error.js";
 import { TokenType, TokenStream, Token, wordTokens, operatorTokens } from "./tokens.js";
 import { Assign, Conditional, ExpressionAction, For, MakeProc, RepeatN, RepeatUntil, Return } from "./action.js";
 import { execute } from "./execute.js";
-import { autoCompleteMaybe } from "./autocomplete.js";
+import { autoCompleteSendKey, clearAutoCompleteBox } from "./autocomplete.js";
 
 const examplePrograms = {
     default: `PROCEDURE calculateAverage(list_of_numbers) {
@@ -108,24 +108,28 @@ window.syncScroll = (/** @type {HTMLTextAreaElement} */ textArea) => {
 // @ts-ignore
 window.checkTab = (/** @type {HTMLTextAreaElement} */ element, /** @type {KeyboardEvent} */ event) => {
     let code = element.value;
-    if (event.key != "Tab") return;
-    event.preventDefault();
 
-    if (autoCompleteMaybe())
+    if (autoCompleteSendKey(event.key)) {
+        event.preventDefault();
         return;
+    }
 
-    let before_tab = code.slice(0, element.selectionStart);
-    let after_tab = code.slice(element.selectionEnd, element.value.length);
-    let cursor_pos = element.selectionEnd + 4;
+    if (event.key == "Tab") {
+        event.preventDefault();
 
-    element.value = before_tab + "    " + after_tab;
+        let before_tab = code.slice(0, element.selectionStart);
+        let after_tab = code.slice(element.selectionEnd, element.value.length);
+        let cursor_pos = element.selectionEnd + 4;
 
-    // move cursor
-    element.selectionStart = cursor_pos;
-    element.selectionEnd = cursor_pos;
+        element.value = before_tab + "    " + after_tab;
 
-    // @ts-ignore
-    window.update(element);
+        // move cursor
+        element.selectionStart = cursor_pos;
+        element.selectionEnd = cursor_pos;
+
+        // @ts-ignore
+        window.update(element);
+    }
 };
 
 // @ts-ignore
@@ -145,6 +149,11 @@ window.insertChar = (/** @type {string} */ ch) => {
 
     // @ts-ignore
     window.setTimeout(() => { window.update(code); }, 0);
+};
+
+// @ts-ignore
+window.clickCode = () => {
+    clearAutoCompleteBox();
 };
 
 const ParserState = Object.freeze({
