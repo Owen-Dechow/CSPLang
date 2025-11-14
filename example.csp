@@ -1,15 +1,12 @@
-PROCEDURE calculateAverage(list_of_numbers)
-{
+PROCEDURE calculateAverage(list_of_numbers) {
     sum_of_numbers ← 0
     num_elements ← LENGTH(list_of_numbers)
 
-    IF (num_elements = 0)
-    {
+    IF (num_elements = 0) {
         RETURN 0 // Handle empty list case
     }
 
-    FOR EACH number IN list_of_numbers
-    {
+    FOR EACH number IN list_of_numbers {
         sum_of_numbers ← sum_of_numbers + number
     }
 

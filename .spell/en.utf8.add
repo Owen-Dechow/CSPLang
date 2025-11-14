@@ -4,3 +4,7 @@ backstep
 Paren
 paren
 instanceof
+oninput
+onkeydown
+onchange
+keydown

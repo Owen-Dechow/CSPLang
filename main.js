@@ -7,6 +7,45 @@ import { CSPError } from "./error.js";
 import { TokenType, TokenStream, Token, wordTokens, operatorTokens } from "./tokens.js";
 import { Assign, Conditional, ExpressionAction, For, MakeProc, RepeatN, RepeatUntil, Return } from "./action.js";
 import { execute } from "./execute.js";
+import { autoCompleteMaybe } from "./autocomplete.js";
+
+const examplePrograms = {
+    default: `PROCEDURE calculateAverage(list_of_numbers) {
+    sum_of_numbers ← 0
+    num_elements ← LENGTH(list_of_numbers)
+
+    IF (num_elements = 0) {
+        RETURN 0 // Handle empty list case
+    }
+
+    FOR EACH number IN list_of_numbers {
+        sum_of_numbers ← sum_of_numbers + number
+    }
+
+    average ← sum_of_numbers / num_elements
+    RETURN average
+}
+
+// Main program execution
+numbers_list ← [10, 20, 30, 40, 50]
+result_average ← calculateAverage(numbers_list)
+DISPLAY("The average of the numbers is: ")
+DISPLAY(result_average)
+
+empty_list ← []
+result_empty_average ← calculateAverage(empty_list)
+DISPLAY("The average of an empty list is: ")
+DISPLAY(result_empty_average)`};
+
+document.addEventListener("DOMContentLoaded", () => {
+    const code = document.querySelector("#code");
+
+    // @ts-ignore
+    code.innerHTML = examplePrograms.default;
+
+    // @ts-ignore
+    window.update(code);
+});
 
 // @ts-ignore
 window.run = () => {
@@ -19,12 +58,93 @@ window.run = () => {
     try {
         const tokens = lex(text + "\n");
         const ast = parse(new TokenStream(tokens), true);
-        console.log(ast);
         execute(ast);
     } catch (e) {
         console.error(e);
         e.printout(text);
     }
+};
+
+// @ts-ignore
+window.update = (/** @type {HTMLTextAreaElement} */ textArea) => {
+    let text = textArea.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    if (text[text.length - 1] == "\n") {
+        text += " ";
+    }
+
+    const rules = {
+        operators: ["#66d200", /[{}()\[\],←≤≥≠=]/g],
+        lt: ["#66d200", /&lt;/g],
+        gt: ["#66d200", /&gt;/g],
+        keyword: ["#e13166", /\b(FOR|EACH|IN|IF|ELSE|RETURN|MOD|NOT|AND|OR|REPEAT|TIMES|UNTIL|PROCEDURE)\b/g],
+        builtin: ["#e88035", /\b(DISPLAY|LENGTH)\b/g],
+        bool: ["#ff00fb", /\b(true|false)\b/g],
+        number: ["#149be3", /\b\d+\b/g],
+        comment: ["#707070", /\/\/.*/g],
+        string: ["#d7a65f", /"[^"]*"/gs],
+    };
+
+    for (const [_, [color, regex]] of Object.entries(rules)) {
+        text = text.replace(regex, (/** @type {string} */ match) => {
+            return `<span style='color: ${color}'>${match}</span>`;
+        });
+    }
+
+    // @ts-ignore
+    document.querySelector("#highlighting").innerHTML = text;
+};
+
+// @ts-ignore
+window.syncScroll = (/** @type {HTMLTextAreaElement} */ textArea) => {
+    /** @type {Element} */
+    // @ts-ignore
+    const highlighting = document.querySelector("#highlighting");
+
+    highlighting.scrollTop = textArea.scrollTop;
+    highlighting.scrollLeft = textArea.scrollLeft;
+};
+
+// @ts-ignore
+window.checkTab = (/** @type {HTMLTextAreaElement} */ element, /** @type {KeyboardEvent} */ event) => {
+    let code = element.value;
+    if (event.key != "Tab") return;
+    event.preventDefault();
+
+    if (autoCompleteMaybe())
+        return;
+
+    let before_tab = code.slice(0, element.selectionStart);
+    let after_tab = code.slice(element.selectionEnd, element.value.length);
+    let cursor_pos = element.selectionEnd + 4;
+
+    element.value = before_tab + "    " + after_tab;
+
+    // move cursor
+    element.selectionStart = cursor_pos;
+    element.selectionEnd = cursor_pos;
+
+    // @ts-ignore
+    window.update(element);
+};
+
+// @ts-ignore
+window.insertChar = (/** @type {string} */ ch) => {
+    /** @type {HTMLTextAreaElement} */
+    // @ts-ignore
+    const code = document.querySelector("#code");
+
+    const start = code.selectionStart;
+    const end = code.selectionEnd;
+
+    // Use setRangeText so Ctrl-Z works
+    code.setRangeText(ch, start, end, "end");
+
+    // Refocus the textarea
+    code.focus();
+
+    // @ts-ignore
+    window.setTimeout(() => { window.update(code); }, 0);
 };
 
 const ParserState = Object.freeze({
