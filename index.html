@@ -11,28 +11,35 @@
 </head>
 
 <body>
-    <h1>CSP Pseudocode Runner</h1>
-    <div class="buttons">
-        <div>
-            <button onclick="insertChar('←')">←</button>
-            <button onclick="insertChar('≠')">≠</button>
-            <button onclick="insertChar('≥')">≥</button>
-            <button onclick="insertChar('≤')">≤</button>
+    <header>
+        <h1>CSP Pseudocode Runner</h1>
+        By: Owen Dechow
+    </header>
+    <div class="editing-screen">
+        <div class="buttons">
+            <div>
+                <button onclick="insertChar('←')">←</button>
+                <button onclick="insertChar('≠')">≠</button>
+                <button onclick="insertChar('≥')">≥</button>
+                <button onclick="insertChar('≤')">≤</button>
+            </div>
+            <div>
+                <button onclick="run()">Run</button>
+                <button onclick="clearUiTerm()">Clear</button>
+            </div>
         </div>
-        <div>
-            <button onclick="run()">Run</button>
+        <div class="editor">
+            <div class="suggestions" id="suggestions" style="display: none"></div>
+            <textarea onclick="clickCode()" onkeydown="checkTab(this, event)" onchange="update(this)"
+                oninput="update(this); suggestCompletions(this)" onscroll="syncScroll(this)" spellcheck="false"
+                class="code" id="code"></textarea>
+            <pre aria-hidden="true" class="highlighting" id="highlighting"></pre>
         </div>
-    </div>
-    <div class="editor">
-        <div class="suggestions" id="suggestions"></div>
-        <textarea onclick="clickCode()" onkeydown="checkTab(this, event)" onchange="update(this)" oninput="update(this); suggestCompletions(this)"
-            onscroll="syncScroll(this)" spellcheck="false" class="code" id="code"></textarea>
-        <pre aria-hidden="true" class="highlighting" id="highlighting"></pre>
-    </div>
 
-    <code>
-        <pre class="output" id="output"></pre>
-    </code>
+        <code>
+            <pre class="output" id="output"></pre>
+        </code>
+    </div>
 </body>
 
 </html>

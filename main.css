@@ -5,12 +5,23 @@
 body {
     background-color: #0a0a0a;
     color: #eeeeee;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+header {
+    text-align: center;
+}
+
+.editing-screen {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: auto 1fr auto;
+    height: 90vh;
 }
 
 .editor {
     position: relative;
     border: 1px solid;
-    height: 500px;
     overflow: hidden;
 
     .code,
@@ -75,6 +86,18 @@ body {
     display: flex;
     margin-bottom: 10px;
     justify-content: space-between;
+
+    button {
+        all: unset;
+        border-radius: 3px;
+        border: 1px solid;
+        padding: 5px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #303030;
+    }
 }
 
 .suggestions {
@@ -88,9 +111,12 @@ body {
     flex-direction: column;
 
     div {
-        &.complete-target{
-            background-color: white;
-            color: black;
+        border-bottom: 1px solid transparent;
+
+        &.complete-target {
+            background-color: #003000;
+            font-weight: bold;
+            border-bottom: 1px solid;
         }
 
         display: grid;

@@ -109,7 +109,15 @@ export class CSPError {
      * @param {[number, number]} range
      */
     static nullValueError(range) {
-        return new CSPError(range[0], range[1], "Null value error.");
+        return CSPError.fromRange(range, "Null value error.");
+    }
+
+    /**
+     * @param {[number, number]} range
+     * @param {string} msg
+     */
+    static fromRange(range, msg) {
+        return new CSPError(range[0], range[1], msg);
     }
 }
 

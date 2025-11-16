@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // @ts-ignore
 window.run = () => {
     // @ts-ignore
-    document.querySelector("#output").innerHTML = "";
+    window.clearUiTerm();
 
     // @ts-ignore
     const text = document.querySelector("#code").value;
@@ -66,6 +66,12 @@ window.run = () => {
 };
 
 // @ts-ignore
+window.clearUiTerm = () => {
+    // @ts-ignore
+    document.querySelector("#output").innerHTML = "";
+};
+
+// @ts-ignore
 window.update = (/** @type {HTMLTextAreaElement} */ textArea) => {
     let text = textArea.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -78,7 +84,7 @@ window.update = (/** @type {HTMLTextAreaElement} */ textArea) => {
         lt: ["#66d200", /&lt;/g],
         gt: ["#66d200", /&gt;/g],
         keyword: ["#e13166", /\b(FOR|EACH|IN|IF|ELSE|RETURN|MOD|NOT|AND|OR|REPEAT|TIMES|UNTIL|PROCEDURE)\b/g],
-        builtin: ["#e88035", /\b(DISPLAY|LENGTH)\b/g],
+        builtin: ["#e88035", /\b(DISPLAY|LENGTH|INPUT|REMOVE|INSERT|APPEND)\b/g],
         bool: ["#ff00fb", /\b(true|false)\b/g],
         number: ["#149be3", /\b\d+\b/g],
         comment: ["#707070", /\/\/.*/g],
@@ -266,6 +272,7 @@ function lex(text) {
             if (c != '"' || value.length == 0) {
                 value += c;
             } else {
+                value += '"';
                 sendToken(TokenType.STRING, false);
             }
         } else if (state == ParserState.NUMBER) {
@@ -391,12 +398,13 @@ function parseRepeatUntil(ts) {
  */
 function parseRepeat(ts) {
     const t = ts.nextSig();
-    ts.back();
 
-    if (t.type == TokenType.REPEAT)
+    if (t.type == TokenType.UNTIL)
         return parseRepeatUntil(ts);
-    else
+    else {
+        ts.back();
         return parseRepeatN(ts);
+    }
 
 }
 
@@ -472,6 +480,10 @@ function parse(ts, rootBlock) {
             steps.push(parseFor(ts));
         } else if (t.type == TokenType.RETURN) {
             steps.push(parseReturn(ts));
+
+            if (rootBlock) {
+                throw CSPError.fromRange([t.loc - t.value.length, t.loc], `May not return form global space.`);
+            }
         } else if (t.type == TokenType.ID) {
             steps.push(parseIdLeadLine(ts));
         } else {

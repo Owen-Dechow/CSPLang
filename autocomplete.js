@@ -1,20 +1,27 @@
 // @ts-check
 
 const words = [
-    ["PROCEDURE", "PROCEDURE"],
-    ["FOR", "FOR"],
-    ["EACH", "EACH"],
-    ["IN", "IN"],
-    ["IF", "IF"],
-    ["ELSE", "ELSE"],
-    ["RETURN", "RETURN"],
-    ["MOD", "MOD"],
-    ["NOT", "NOT"],
-    ["AND", "AND"],
-    ["OR", "OR"],
-    ["REPEAT", "REPEAT"],
-    ["TIMES", "TIMES"],
-    ["UNTIL", "UNTIL"],
+    ["PROCEDURE", "keyword"],
+    ["FOR", "keyword"],
+    ["EACH", "keyword"],
+    ["IN", "keyword"],
+    ["IF", "keyword"],
+    ["ELSE", "keyword"],
+    ["RETURN", "keyword"],
+    ["MOD", "keyword"],
+    ["NOT", "keyword"],
+    ["AND", "keyword"],
+    ["OR", "keyword"],
+    ["REPEAT", "keyword"],
+    ["TIMES", "keyword"],
+    ["UNTIL", "keyword"],
+    ["LENGTH", "builtin"],
+    ["DISPLAY", "builtin"],
+    ["RANDOM", "builtin"],
+    ["INPUT", "builtin"],
+    ["INSERT", "builtin"],
+    ["APPEND", "builtin"],
+    ["REMOVE", "builtin"],
     ["ass", "←"],
     ["neq", "≠"],
     ["lteq", "≤"],
@@ -178,6 +185,24 @@ export function clearAutoCompleteBox() {
 let completeTarget = 20;
 let completions = [];
 
+/**
+ * @param {string} text
+ * @param {number} cursorPos
+ */
+function getAllWords(text, cursorPos) {
+    const cleaned = text.replace(/\/\/[^\n]*/g, '').replace(/"[^"]*"/g, '');
+
+    const allWords = cleaned.match(/\b[a-zA-Z0-9_]+\b/g) || [];
+
+    return allWords.filter(word => {
+        const left = text.slice(0, cursorPos).match(/[a-zA-Z0-9_]+$/);
+        const right = text.slice(cursorPos).match(/^[a-zA-Z0-9_]+/);
+        const currentWord = (left ? left[0] : '') + (right ? right[0] : '');
+        return currentWord !== word;
+    });
+}
+
+
 // @ts-ignore
 window.suggestCompletions = (/** @type {HTMLTextAreaElement} */ element) => {
     /** @type {HTMLDivElement} */
@@ -206,11 +231,11 @@ window.suggestCompletions = (/** @type {HTMLTextAreaElement} */ element) => {
     const localWords = words.map(([key, display]) => [key, display]);
 
     // Sort all words by similarity using the key
-    const allWords = element.value.match(/\b[a-zA-Z0-9_]+\b/g) || [];
+    const allWords = getAllWords(element.value, caretPos);
     allWords.forEach(w => {
         const exists = localWords.some(([key]) => key == w);
         if (!exists && !query.includes(w)) {
-            localWords.push([w, w]); // add with same display form
+            localWords.push([w, "user"]); // add with same display form
         }
     });
 
@@ -226,13 +251,20 @@ window.suggestCompletions = (/** @type {HTMLTextAreaElement} */ element) => {
             if (completions.length == 0)
                 div.classList.add("complete-target");
 
-            div.innerHTML = `<span>${key}</span><span>${display}</span>`;
+            const colors = {
+                keyword: "#e13166",
+                user: "white",
+                builtin: "#e88035"
+            };
+            let color = colors[display] ? colors[display] : "#66d200";
+
+            div.innerHTML = `<span>${key}</span><span style="color: ${color}">${display}</span>`;
 
             // @ts-ignore
             div.callback = () => {
-                const newBeforeCaret = beforeCaret.replace(/([a-zA-Z0-9_]+)$/, display);
-                element.value = newBeforeCaret + " " + afterCaret;
-                const newCaretPos = newBeforeCaret.length + 1;
+                const newBeforeCaret = beforeCaret.replace(/([a-zA-Z0-9_]+)$/, colors[display] ? key : display);
+                element.value = newBeforeCaret + afterCaret;
+                const newCaretPos = newBeforeCaret.length;
                 element.focus();
                 element.setSelectionRange(newCaretPos, newCaretPos);
                 suggestionsBox.innerHTML = "";

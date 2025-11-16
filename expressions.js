@@ -8,7 +8,19 @@
 import { TokenType, TokenStream, Token } from "./tokens.js";
 import { CSPError } from "./error.js";
 
-export class Value { }
+export class Value {
+    /**
+     * @param {string} v
+     */
+    static fromInput(v) {
+        const num = parseFloat(v);
+        if (!isNaN(num) && isFinite(num)) {
+            return new NumberValue(num);
+        }
+
+        return new StringValue(v);
+    }
+}
 
 export class NumberValue extends Value {
     /**
@@ -110,17 +122,10 @@ export class BinaryExpression extends Expression {
         const right = this.right.evaluate(context);
 
         let type = this.token.type;
-
-        // NullValue, NumberValue, StringValue, BooleanValue, ListValue  
-        if (left.constructor != right.constructor) {
-            throw CSPError.fromExpression(
-                `Left and right hand sides of "${this.token.type}" are of different types; left is of type ${left.constructor.name}, and right is of type ${right.constructor.name}.`, this
-            );
-        }
-
         let binOps = {};
 
-        if (left instanceof NumberValue) {
+
+        if (left instanceof NumberValue && right instanceof NumberValue) {
             binOps[TokenType.ADD] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a + b);
             binOps[TokenType.SUBTRACT] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a - b);
             binOps[TokenType.DIVIDE] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a / b);
@@ -132,20 +137,27 @@ export class BinaryExpression extends Expression {
             binOps[TokenType.LESS_THAN_OR_EQUAL] = (/** @type {number} */ a, /** @type {number} */ b) => new BooleanValue(a <= b);
             binOps[TokenType.GREATER_THAN_OR_EQUAL] = (/** @type {number} */ a, /** @type {number} */ b) => new BooleanValue(a >= b);
             binOps[TokenType.MOD] = (/** @type {number} */ a, /** @type {number} */ b) => new NumberValue(a % b);
-        } else if (left instanceof StringValue) {
-            binOps[TokenType.ADD] = (/** @type {string} */ a, /** @type {string} */ b) => new StringValue(a + b);
+        } else if (left instanceof StringValue && right instanceof StringValue) {
             binOps[TokenType.EQUAL] = (/** @type {string} */ a, /** @type {string} */ b) => new BooleanValue(a === b);
             binOps[TokenType.NOT_EQUAL] = (/** @type {string} */ a, /** @type {string} */ b) => new BooleanValue(a !== b);
-        } else if (left instanceof BooleanValue) {
+        } else if (left instanceof BooleanValue && right instanceof BooleanValue) {
             binOps[TokenType.AND] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a && b);
             binOps[TokenType.OR] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a || b);
             binOps[TokenType.EQUAL] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a === b);
             binOps[TokenType.NOT_EQUAL] = (/** @type {boolean} */ a, /** @type {boolean} */ b) => new BooleanValue(a !== b);
-        } else if (left instanceof NullValue) {
+        } else if (left instanceof NullValue || right instanceof NullValue) {
             throw CSPError.nullValueError(this.getLocRange());
+        } else if (left instanceof StringValue && right instanceof NumberValue) {
+            binOps[TokenType.EQUAL] = (/** @type {any} */ a, /** @type {any} */ b) => new BooleanValue(a == b);
+            binOps[TokenType.NOT_EQUAL] = (/** @type {any} */ a, /** @type {any} */ b) => new BooleanValue(a != b);
+        } else if (left instanceof NumberValue && right instanceof StringValue) {
+            binOps[TokenType.NOT_EQUAL] = (/** @type {any} */ a, /** @type {any} */ b) => new BooleanValue(a != b);
+            binOps[TokenType.EQUAL] = (/** @type {any} */ a, /** @type {any} */ b) => new BooleanValue(a == b);
         }
-        else if (left instanceof ListValue) { } else {
-            throw new Error("SHOULD NEVER HIT THIS POINT");
+        else if (left instanceof ListValue && right instanceof ListValue) { } else {
+            throw CSPError.fromExpression(
+                `Left and right hand sides of "${this.token.type}" are incompatible; left is of type ${left.constructor.name}, and right is of type ${right.constructor.name}.`, this
+            );
         }
 
         const op = binOps[type];
@@ -157,7 +169,7 @@ export class BinaryExpression extends Expression {
             return op(left.value, rightVal);
         }
 
-        throw CSPError.fromExpression(`${type} is not a valid operator for ${left.constructor.name}.`, this);
+        throw CSPError.fromExpression(`${type} is not a valid operator for ${left.constructor.name} and ${right.constructor.name}.`, this);
     }
 
     /**
@@ -293,7 +305,7 @@ export class ListExpression extends Expression {
      * @returns {[number, number]}
      */
     getLocRange() {
-       return [this.open.loc - this.open.value.length, this.close.loc]
+        return [this.open.loc - this.open.value.length, this.close.loc];
     }
 }
 
