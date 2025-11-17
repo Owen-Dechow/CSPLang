@@ -21,10 +21,10 @@
         <div class="splitable">
             <p>
                 The following is a justification of certain (perhaps controversial)
-                implementation choices made in this CSP Pseudocode (hereinafter "CSP")
-                Interpreter by Owen Dechow.
+                implementation choices I made in this CSP Pseudocode (hereinafter "CSP")
+                Interpreter (CSP Pseudocode Runner By: Owen Dechow).
 
-                Examples of the code will appear to the right or below the text,
+                Examples of CSP will appear to the right or below the text,
                 as seen here.
             </p>
             <code>// Owen Dechow
@@ -32,7 +32,7 @@
             </code>
         </div>
 
-        <p>Parts of the editor are also discussed here because the interpreter
+        <p>Parts of the editor are also discussed because the interpreter
             and editor are closely integrated. The editor is NOT, though, the
             main purpose of this page and therefore will not be exhaustively
             justified.</p>
@@ -45,7 +45,7 @@
                 each of those special characters. No alternatives are given for
                 these characters. The interpreter will not accept any similar
                 ASCII symbols as equivalent. The symbols are featured in the
-                code example.
+                following example.
             </p>
             <code>name ← value // Left Facing Arrow
                 num ≥ num2 // Greater Than or Equal to
@@ -54,7 +54,7 @@
             </code>
         </div>
 
-        <p>Because these characters are easily typed they may be inserted
+        <p>Because these characters are not easily typed they may be inserted
             into the editor by one of two simple ways. First, by button: on the top
             of the editor there are buttons for each of these characters that will,
             when clicked, insert the character. Second, by autocompletion: a basic
@@ -74,12 +74,12 @@
         <div class="splitable">
             <p>The CSP INPUT function <q>Accepts a value from the user and returns the input value.</q>
                 While one would typically assume this means input is read form the terminal
-                line, the implementation has opted to use the builtin browsers prompt
+                line, I have opted to use the builtin browsers prompt
                 dialog. This choice was made for two reasons. First, to make it clear input
                 is expected. The browser prompt makes it abundantly clear it wants you
                 to enter some text. A hanging program that is just sitting waiting for
                 you to press enter in the terminal does not. Second, because the DISPLAY
-                function does not print a newline. The text of the input will unfavorably
+                function does not print a newline, the text of the input will unfavorably
                 be on the same line as the output of the program if using terminal input.</p>
             <code>userInput ← INPUT()
                 DISPLAY("The user typed: ")
@@ -101,20 +101,24 @@
 
         <div class="splitable">
             <p>CSP is dynamically typed without a way to parse or
-                cast types. Because of this the implementation took inspiration from
-                JavaScript. In the event that a string is compared to a number, the
+                cast types. Because of this I took inspiration from
+                JavaScript (I dislike this feature of JS funnily enough). In
+                the event that a string is compared to a number in JS, the
                 type of the values are not considered, only the values themselves.
                 Unlike JavaScript though, this implementation does not have arithmetic
                 operators for strings (there is no mention of them in the CSP spec
                 therefore they were left out intentionally).</p>
-            <code>"12" = 12 // True</code>
+            <code>"12" = 12 // True
+                353 = 353 // True
+                "43" = 4 // False
+                34 ≠ "3" // True</code>
         </div>
 
-        <p>This means that if a value is a number it has every feature of a string
-            in CSP. The opposite is not true though. If a value is a string it does
+        <p>This means that if a value is a number, it has every feature of a string
+            in CSP. The opposite is not true, though. If a value is a string, it does
             not have all the features of a number. Therefore if a input is assumed
-            to be a number it will work in every situation where that assumption
-            was wrong without error.</p>
+            to be a number, it will work in every situation where that assumption
+            was wrong without an error or unexpected behavior.</p>
 
         <p>DISCLAIMER: this does have the negative effect of making some errors
             less intuitive.</p>
@@ -126,7 +130,8 @@
                 Because it does not state <q>a &lt; b</q> in the spec, the implementation
                 allows for either number to be the min or max.</p>
             <code>RANDOM(1, 10) // is the same as
-                RANDOM(10, 1)</code>
+                RANDOM(10, 1)
+                RANDOM(7, 7) // Will always return 7</code>
         </div>
 
         <h2>5. Dynamic List Types</h2>
@@ -135,13 +140,13 @@
                 the case for several reasons. One, there is no way to determine the inner type
                 of an empty list. Two, INPUT may result in a string or number. Three, the
                 spec does not say <q>lists must be comprised of one singular type.</q> Four, I do
-                not like JavaScript and making them dynamic meant I had to write less of it.</p>
+                not like JavaScript, and making them dynamic meant I had to write less of it.</p>
             <code>// The following is a valid list
                 [1, "Hello", [1, 2]]</code>
         </div>
         <h2>6. Comments</h2>
 
-        <p>CSP does not have any mention of comments. Despite this I decided
+        <p>The CSP spec does not have any mention of comments. Despite this I decided
             to add single line comments anyway. As CSP has no practical use outside of a classroom.
             I decided the clarity added from a comment is more beneficial than the value of a perfect
             implementation.</p>
@@ -149,17 +154,18 @@
         <code>// Hi there. This is a single line comment.</code>
 
         <h2>7. Literals</h2>
-        <p>There is no clear information on how literals appear in CSP (the spec does not
+        <p>There is no clear specification on how literals should appear in CSP (the spec does not
             have any such section). I have chosen the following for the implementation based
             on questions from college board and CSP code examples.</p>
         <div class="splitable">
             <p>Numbers may only contain
                 digits and one single decimal point (the decimal point may be omitted in the case
-                of integers).</p>
+                of integers). A leading negative is valid but will be evaluated at runtime.</p>
 
             <code>10 // Valid number
                 3.14 // Valid number
-                67.41.0 // Invalid number</code>
+                67.41.0 // Invalid number
+                -20 // Evaluated as ("-", "20")</code>
         </div>
         <div class="splitable">
             <p>Strings must be encapsulated by double quotes. There are no escape sequences.</p>
