@@ -1,6 +1,10 @@
 // @ts-check
 
 const words = [
+    ["assign", "←"],
+    ["neq", "≠"],
+    ["lteq", "≤"],
+    ["gteq", "≥"],
     ["PROCEDURE", "keyword"],
     ["FOR", "keyword"],
     ["EACH", "keyword"],
@@ -22,10 +26,6 @@ const words = [
     ["INSERT", "builtin"],
     ["APPEND", "builtin"],
     ["REMOVE", "builtin"],
-    ["ass", "←"],
-    ["neq", "≠"],
-    ["lteq", "≤"],
-    ["qteq", "≥"],
 ];
 
 /**
@@ -192,7 +192,7 @@ let completions = [];
 function getAllWords(text, cursorPos) {
     const cleaned = text.replace(/\/\/[^\n]*/g, '').replace(/"[^"]*"/g, '');
 
-    const allWords = cleaned.match(/\b[a-zA-Z0-9_]+\b/g) || [];
+    const allWords = cleaned.match(/\b[a-zA-Z_]+\b/g) || [];
 
     return allWords.filter(word => {
         const left = text.slice(0, cursorPos).match(/[a-zA-Z0-9_]+$/);
@@ -217,7 +217,7 @@ window.suggestCompletions = (/** @type {HTMLTextAreaElement} */ element) => {
     completeTarget = 0;
 
     // Match only the last alphanumeric "word" before caret
-    const match = beforeCaret.match(/([a-zA-Z0-9_]+)$/);
+    const match = beforeCaret.match(/([a-zA-Z_]+)$/);
     const query = match ? match[0].toLowerCase() : "";
 
     suggestionsBox.innerHTML = "";
@@ -253,7 +253,7 @@ window.suggestCompletions = (/** @type {HTMLTextAreaElement} */ element) => {
 
             const colors = {
                 keyword: "#e13166",
-                user: "white",
+                user: "gray",
                 builtin: "#e88035"
             };
             let color = colors[display] ? colors[display] : "#66d200";
@@ -262,7 +262,7 @@ window.suggestCompletions = (/** @type {HTMLTextAreaElement} */ element) => {
 
             // @ts-ignore
             div.callback = () => {
-                const newBeforeCaret = beforeCaret.replace(/([a-zA-Z0-9_]+)$/, colors[display] ? key : display);
+                const newBeforeCaret = beforeCaret.replace(/([a-zA-Z_]+)$/, colors[display] ? key : display);
                 element.value = newBeforeCaret + afterCaret;
                 const newCaretPos = newBeforeCaret.length;
                 element.focus();

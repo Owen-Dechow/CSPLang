@@ -8,6 +8,8 @@
 import { TokenType, TokenStream, Token } from "./tokens.js";
 import { CSPError } from "./error.js";
 
+const numberDigits = 10;
+
 export class Value {
     /**
      * @param {string} v
@@ -28,8 +30,11 @@ export class NumberValue extends Value {
      */
     constructor(v) {
         super();
+
+        const pow = Math.pow(10, numberDigits);
+
         /** @type {number} */
-        this.value = v;
+        this.value = Math.round(v * pow) / pow;
     }
 }
 

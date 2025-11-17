@@ -10,7 +10,9 @@ import { execute } from "./execute.js";
 import { autoCompleteSendKey, clearAutoCompleteBox } from "./autocomplete.js";
 
 const examplePrograms = {
-    default: `PROCEDURE calculateAverage(list_of_numbers) {
+    HelloWorld: `DISPLAY("HELLO WORLD")`,
+    Empty: ``,
+    CalcAverage: `PROCEDURE calculateAverage(list_of_numbers) {
     sum_of_numbers ← 0
     num_elements ← LENGTH(list_of_numbers)
 
@@ -35,7 +37,8 @@ DISPLAY(result_average)
 empty_list ← []
 result_empty_average ← calculateAverage(empty_list)
 DISPLAY("The average of an empty list is: ")
-DISPLAY(result_empty_average)`};
+DISPLAY(result_empty_average)`,
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     const code = document.querySelector("#code");
@@ -45,7 +48,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // @ts-ignore
     window.update(code);
+
+
+    const examples = document.querySelector("#example-programs");
+
+    Object.keys(examplePrograms).forEach(e => {
+        // @ts-ignore
+        if (!examples.value)
+            // @ts-ignore
+            examples.value = e;
+
+        const opt = document.createElement("option");
+        opt.value = e;
+        opt.textContent = e;
+
+        // @ts-ignore
+        examples.append(opt);
+    });
+
+    // @ts-ignore
+    window.setProgram();
 });
+
+// @ts-ignore
+window.setProgram = () => {
+    const code = document.querySelector("#code");
+    const examples = document.querySelector("#example-programs");
+
+    // @ts-ignore
+    code.value = examplePrograms[examples.value];
+    
+    // @ts-ignore
+    window.update(code);
+};
 
 // @ts-ignore
 window.run = () => {
@@ -97,18 +132,14 @@ window.update = (/** @type {HTMLTextAreaElement} */ textArea) => {
         });
     }
 
+    let nums = "";
+    text.split("\n").forEach((_, i) => { nums += i + 1 + "\n"; });
+
+    // @ts-ignore
+    document.querySelector("#numbers").innerHTML = nums;
+
     // @ts-ignore
     document.querySelector("#highlighting").innerHTML = text;
-};
-
-// @ts-ignore
-window.syncScroll = (/** @type {HTMLTextAreaElement} */ textArea) => {
-    /** @type {Element} */
-    // @ts-ignore
-    const highlighting = document.querySelector("#highlighting");
-
-    highlighting.scrollTop = textArea.scrollTop;
-    highlighting.scrollLeft = textArea.scrollLeft;
 };
 
 // @ts-ignore

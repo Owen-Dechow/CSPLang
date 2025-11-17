@@ -148,7 +148,6 @@ export function execute(ast) {
         })
     };
 
-    console.log(ast);
     executeBlock(ast, gc, gc);
 }
 

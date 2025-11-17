@@ -10,6 +10,32 @@ body {
 
 header {
     text-align: center;
+    margin: 20px;
+    
+    h1 {
+        margin: 0;
+    }
+}
+
+select,
+button {
+    border-radius: 3px;
+    border: 1px solid;
+    padding: 3px;
+    cursor: pointer;
+    background-color: #0a0a0a;
+    color: inherit;
+
+    &:hover {
+        background-color: #303030;
+    }
+}
+
+.editor-wrapper {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    border: 1px solid;
+    overflow: auto;
 }
 
 .editing-screen {
@@ -19,9 +45,15 @@ header {
     height: 90vh;
 }
 
+.numbers {
+    white-space: pre;
+    padding: 5px;
+    border-right: 1px solid;
+    text-align: right;
+}
+
 .editor {
     position: relative;
-    border: 1px solid;
     overflow: hidden;
 
     .code,
@@ -57,7 +89,8 @@ header {
 
 .output,
 .code,
-.highlighting {
+.highlighting,
+.numbers {
     font-size: 1.1em;
     font-family: monospace;
     line-height: 1.25;
@@ -87,17 +120,7 @@ header {
     margin-bottom: 10px;
     justify-content: space-between;
 
-    button {
-        all: unset;
-        border-radius: 3px;
-        border: 1px solid;
-        padding: 5px;
-        cursor: pointer;
-    }
 
-    button:hover {
-        background-color: #303030;
-    }
 }
 
 .suggestions {
@@ -120,7 +143,7 @@ header {
         }
 
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 5px;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
     }
 }
