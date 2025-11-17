@@ -43,31 +43,40 @@ DISPLAY(result_empty_average)`,
 document.addEventListener("DOMContentLoaded", () => {
     const code = document.querySelector("#code");
 
-    // @ts-ignore
-    code.innerHTML = examplePrograms.default;
+    if (code) {
+        code.innerHTML = examplePrograms.default;
 
-    // @ts-ignore
-    window.update(code);
-
-
-    const examples = document.querySelector("#example-programs");
-
-    Object.keys(examplePrograms).forEach(e => {
         // @ts-ignore
-        if (!examples.value)
+        window.update(code);
+
+
+        const examples = document.querySelector("#example-programs");
+
+        Object.keys(examplePrograms).forEach(e => {
             // @ts-ignore
-            examples.value = e;
+            if (!examples.value)
+                // @ts-ignore
+                examples.value = e;
 
-        const opt = document.createElement("option");
-        opt.value = e;
-        opt.textContent = e;
+            const opt = document.createElement("option");
+            opt.value = e;
+            opt.textContent = e;
+
+            // @ts-ignore
+            examples.append(opt);
+        });
 
         // @ts-ignore
-        examples.append(opt);
-    });
+        window.setProgram();
+    }
 
-    // @ts-ignore
-    window.setProgram();
+    document.querySelectorAll("code").forEach(e => {
+        // @ts-ignore
+        e.innerHTML = highlight(e.hasAttribute("val") ? e.getAttribute("val") : e.innerHTML);
+        if (e.hasAttribute("val")) {
+            e.style.whiteSpace = "pre";
+        }
+    });
 });
 
 // @ts-ignore
@@ -77,7 +86,7 @@ window.setProgram = () => {
 
     // @ts-ignore
     code.value = examplePrograms[examples.value];
-    
+
     // @ts-ignore
     window.update(code);
 };
@@ -108,7 +117,23 @@ window.clearUiTerm = () => {
 
 // @ts-ignore
 window.update = (/** @type {HTMLTextAreaElement} */ textArea) => {
-    let text = textArea.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const text = highlight(textArea.value);
+
+    let nums = "";
+    text.split("\n").forEach((_, i) => { nums += i + 1 + "\n"; });
+
+    // @ts-ignore
+    document.querySelector("#numbers").innerHTML = nums;
+
+    // @ts-ignore
+    document.querySelector("#highlighting").innerHTML = text;
+};
+
+/**
+ * @param {string} text
+ */
+function highlight(text) {
+    text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     if (text[text.length - 1] == "\n") {
         text += " ";
@@ -119,7 +144,7 @@ window.update = (/** @type {HTMLTextAreaElement} */ textArea) => {
         lt: ["#66d200", /&lt;/g],
         gt: ["#66d200", /&gt;/g],
         keyword: ["#e13166", /\b(FOR|EACH|IN|IF|ELSE|RETURN|MOD|NOT|AND|OR|REPEAT|TIMES|UNTIL|PROCEDURE)\b/g],
-        builtin: ["#e88035", /\b(DISPLAY|LENGTH|INPUT|REMOVE|INSERT|APPEND)\b/g],
+        builtin: ["#e88035", /\b(RANDOM|DISPLAY|LENGTH|INPUT|REMOVE|INSERT|APPEND)\b/g],
         bool: ["#ff00fb", /\b(true|false)\b/g],
         number: ["#149be3", /\b\d+\b/g],
         comment: ["#707070", /\/\/.*/g],
@@ -132,15 +157,8 @@ window.update = (/** @type {HTMLTextAreaElement} */ textArea) => {
         });
     }
 
-    let nums = "";
-    text.split("\n").forEach((_, i) => { nums += i + 1 + "\n"; });
-
-    // @ts-ignore
-    document.querySelector("#numbers").innerHTML = nums;
-
-    // @ts-ignore
-    document.querySelector("#highlighting").innerHTML = text;
-};
+    return text;
+}
 
 // @ts-ignore
 window.checkTab = (/** @type {HTMLTextAreaElement} */ element, /** @type {KeyboardEvent} */ event) => {
